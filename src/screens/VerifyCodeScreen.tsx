@@ -1,11 +1,10 @@
-tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 const VerifyCodeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text>VerifyCodeScreen</Text>
+      <Text testID="verify-code-title">VerifyCodeScreen</Text>
     </View>
   );
 };

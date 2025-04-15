@@ -1,11 +1,10 @@
-tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const MapScreen = () => {
+const MapScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text>MapScreen</Text>
+      <Text testID="map-screen-title">MapScreen</Text>
     </View>
   );
 };

@@ -1,11 +1,10 @@
-tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const FriendsScreen = () => {
+const FriendsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text>FriendsScreen</Text>
+      <Text testID="friends-screen-title">FriendsScreen</Text>
     </View>
   );
 };

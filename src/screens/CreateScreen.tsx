@@ -1,11 +1,10 @@
-tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const CreateScreen = () => {
+const CreateScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text>CreateScreen</Text>
+      <Text testID="create-screen-title">CreateScreen</Text>
     </View>
   );
 };

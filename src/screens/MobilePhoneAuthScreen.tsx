@@ -1,11 +1,10 @@
-tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 const MobilePhoneAuthScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text>MobilePhoneAuthScreen</Text>
+      <Text testID="mobile-phone-auth-title">MobilePhoneAuthScreen</Text>
     </View>
   );
 };

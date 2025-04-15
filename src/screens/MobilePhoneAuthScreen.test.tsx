@@ -1,19 +1,17 @@
-tsx
 import React from 'react';
-import { Text } from 'react-native';
-import renderer from 'react-test-renderer';
+import { render, screen } from '@testing-library/react-native';
 import MobilePhoneAuthScreen from './MobilePhoneAuthScreen';
 
 describe('MobilePhoneAuthScreen', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<MobilePhoneAuthScreen />).toJSON();
-    expect(tree).toMatchSnapshot();
+    render(<MobilePhoneAuthScreen />);
+    const title = screen.getByTestId('mobile-phone-auth-title');
+    expect(title).toBeTruthy();
   });
 
   it('displays the text "MobilePhoneAuthScreen"', () => {
-    const tree = renderer.create(<MobilePhoneAuthScreen />);
-    const instance = tree.root;
-    const textComponent = instance.findByProps({testID: "authScreenText"}).children[0];
-    expect(textComponent).toEqual('MobilePhoneAuthScreen');
+    render(<MobilePhoneAuthScreen />);
+    const title = screen.getByTestId('mobile-phone-auth-title');
+    expect(title.props.children).toBe('MobilePhoneAuthScreen');
   });
 });

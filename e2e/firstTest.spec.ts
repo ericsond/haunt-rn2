@@ -1,4 +1,3 @@
-tsx
 import {device, element, by, expect} from 'detox';
 
 describe('Haunt', () => {
@@ -11,6 +10,6 @@ describe('Haunt', () => {
   });
 
   it('Should see the MobilePhoneAuthScreen', async () => {
-    await expect(element(by.text('MobilePhoneAuthScreen'))).toBeVisible();
+    await expect(element(by.id('mobile-phone-auth-title'))).toBeVisible();
   });
 });

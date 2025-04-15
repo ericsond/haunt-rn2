@@ -1,11 +1,10 @@
-tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const FeedScreen = () => {
+const FeedScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text>FeedScreen</Text>
+      <Text testID="feed-screen-title">FeedScreen</Text>
     </View>
   );
 };

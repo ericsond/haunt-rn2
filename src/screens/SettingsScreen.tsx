@@ -1,11 +1,10 @@
-tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const SettingsScreen = () => {
+const SettingsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text>SettingsScreen</Text>
+      <Text testID="settings-screen-title">SettingsScreen</Text>
     </View>
   );
 };
