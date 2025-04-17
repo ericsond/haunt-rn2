@@ -29,6 +29,23 @@ jest.mock('@react-navigation/bottom-tabs', () => ({
   }),
 }));
 
+// Mock react-native-background-geolocation
+jest.mock('react-native-background-geolocation', () => {
+  const mockSubscription = { remove: jest.fn() };
+  
+  return {
+    LOG_LEVEL_VERBOSE: 5,
+    LOG_LEVEL_OFF: 0,
+    DESIRED_ACCURACY_HIGH: 4,
+    ready: jest.fn().mockResolvedValue({ enabled: false }),
+    getState: jest.fn().mockResolvedValue({ enabled: false }),
+    start: jest.fn().mockResolvedValue({ enabled: true }),
+    stop: jest.fn().mockResolvedValue({ enabled: false }),
+    onLocation: jest.fn().mockReturnValue(mockSubscription),
+    onError: jest.fn().mockReturnValue(mockSubscription),
+  };
+});
+
 // Mock react-native
 jest.mock('react-native', () => ({
   Platform: {
@@ -43,4 +60,9 @@ jest.mock('react-native', () => ({
   Text: 'Text',
   TouchableOpacity: 'TouchableOpacity',
   TextInput: 'TextInput',
+  Alert: {
+    alert: jest.fn(),
+  },
+  Button: 'Button',
+  ScrollView: 'ScrollView',
 }));

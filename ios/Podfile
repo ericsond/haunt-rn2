@@ -1,68 +1,87 @@
 # Resolve react_native_pods.rb with node to allow for hoisting
-require Pod::Executable.execute_command('node', ['-p',
-  'require.resolve(
-    "react-native/scripts/react_native_pods.rb",
-    {paths: [process.argv[1]]},
-  )', __dir__]).strip
+require Pod::Executable.execute_command("node", ["-p", "require.resolve(\"react-native/scripts/react_native_pods.rb\",{paths: [process.argv[1]]})", __dir__]).strip
 
-require_relative '../node_modules/react-native/scripts/react_native_pods'
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-
-def find_and_replace(dir, findstr, replacestr)
-  Dir[dir].each do |name|
-      text = File.read(name)
-      replace = text.gsub(findstr,replacestr)
-      if text != replace
-          puts "Fix: " + name
-          File.open(name, "w") { |file| file.puts replace }
-          STDOUT.flush
-      end
-  end
-  Dir[dir + '*/'].each(&method(:find_and_replace))
-end
-
-platform :ios, '15.0'
+# Set minimum iOS version to 16.0 explicitly
+platform :ios, "16.0"
 prepare_react_native_project!
 
-# If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
-# because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
-#
-# To fix this you can also exclude `react-native-flipper` using a `react-native.config.js`
-# ```js
-# module.exports = {
-#   dependencies: {
-#     ...(process.env.NO_FLIPPER ? { 'react-native-flipper': { platforms: { ios: null } } } : {}),
-# ```
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# Use frameworks instead of static libraries
+use_frameworks! :linkage => :static
 
-target 'Haunt' do
+# Explicitly add CocoaLumberjack with exact version and Swift support
+pod "CocoaLumberjack", "3.8.5"
+pod "CocoaLumberjack/Swift", "3.8.5"
+
+# Disable Flipper
+ENV["NO_FLIPPER"] = "1"
+
+target "Haunt" do
   config = use_native_modules!
+
+  # Configure React Native with the correct options
   use_react_native!(
     :path => config[:reactNativePath],
-    # Disable Hermes
-    :hermes_enabled => false,
-    # Enables Fabric (i.e. New Architecture).
+    :hermes_enabled => true,
     :fabric_enabled => false,
-    # Enables Flipper.
-    #
-    # Note that if you have use_frameworks! enabled, Flipper will not work and
-    # you should disable the next line.
-    :flipper_configuration => FlipperConfiguration.enabled,
-    # An absolute path to your application root.
-    :app_path => "#{Pod::Config.instance.installation_root}/.."
+    :app_path => "#{Dir.pwd}/.."
   )
 
+  # For RNBackgroundGeolocation
+  pod "RNBackgroundGeolocation", :path => "../node_modules/react-native-background-geolocation"
+  
+  # For RNBackgroundFetch
+  pod "RNBackgroundFetch", :path => "../node_modules/react-native-background-fetch"
+  
   post_install do |installer|
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
+    # Apply React Native recommended post-installation
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    
+    # Apple Silicon builds require arm64 to be excluded from the simulator archs
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+      
+      # Add $(inherited) flag to build settings
+      config.build_settings["OTHER_CFLAGS"] ||= ["$(inherited)"]
+      config.build_settings["OTHER_LDFLAGS"] ||= ["$(inherited)"]
+      
+      # Ensure minimum iOS deployment target is set consistently
+      config.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = "16.0"
+    end
+
+    # Fix all target build settings for React Native compatibility
+    installer.pods_project.targets.each do |target|
+      # Skip special targets like AggregateTarget
+      next if target.name == 'Pods-Haunt' || target.name.include?('Aggregate')
+      
+      target.build_configurations.each do |config|
+        # Ensure LIBRARY_SEARCH_PATHS includes the inherited paths
+        config.build_settings["LIBRARY_SEARCH_PATHS"] ||= ["$(inherited)"]
+        
+        # For CocoaLumberjack compatibility
+        config.build_settings["BUILD_LIBRARY_FOR_DISTRIBUTION"] = "YES"
+        
+        # Fix CocoaLumberjack module map issues
+        if target.name == "CocoaLumberjack"
+          config.build_settings["DEFINES_MODULE"] = "YES"
+        end
+        
+        # Hermes configuration
+        if target.name.include?("hermes")
+          config.build_settings["GCC_PREPROCESSOR_DEFINITIONS"] ||= ["$(inherited)"]
+          config.build_settings["GCC_PREPROCESSOR_DEFINITIONS"] << "HERMES_ENABLE_DEBUGGER=1"
+        end
+      end
+      
+      # For Xcode 15 compatibility with bundles
+      if target.respond_to?(:product_type) && target.product_type == "com.apple.product-type.bundle"
+        target.build_configurations.each do |config|
+          config.build_settings["CODE_SIGNING_ALLOWED"] = "NO"
+        end
+      end
+    end
   end
 end
